@@ -1,53 +1,77 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import os
+import gspread
+from google.oauth2.service_account import Credentials
 
-# === LOGIN MANUAL SIMPLE ===
-USUARIOS = {
-    "admin": "admin78",
-    "juan": "juan456"
+# ------------------------
+# Login manual sin Hasher
+# ------------------------
+usuarios = {
+    "admin": {
+        "name": "admin",
+        "password": "admin78"
+    },
+    "juan": {
+        "name": "Juan Pérez",
+        "password": "juan456"
+    }
 }
 
-if "autenticado" not in st.session_state:
-    st.session_state.autenticado = False
+# Inicializar el estado de sesión si no existe
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+if "username" not in st.session_state:
+    st.session_state["username"] = ""
 
-if not st.session_state.autenticado:
-    st.title("🔐 Login")
-    usuario = st.text_input("Usuario")
-    password = st.text_input("Contraseña", type="password")
+# ------------------------
+# Mostrar login solo si no está autenticado
+# ------------------------
+if not st.session_state["logged_in"]:
+    st.title("🎟️ Sistema de Tickets - Login")
+
+    username_input = st.text_input("Usuario")
+    password_input = st.text_input("Contraseña", type="password")
+
     if st.button("Iniciar sesión"):
-        if usuario in USUARIOS and password == USUARIOS[usuario]:
-            st.session_state.autenticado = True
-            st.session_state.usuario = usuario
-            st.success("✅ Login exitoso.")
+        if username_input in usuarios and usuarios[username_input]["password"] == password_input:
+            st.session_state["logged_in"] = True
+            st.session_state["username"] = username_input
             st.rerun()
         else:
             st.error("❌ Usuario o contraseña incorrectos.")
     st.stop()
 
-# === APP PRINCIPAL ===
-st.sidebar.success(f"Bienvenido {st.session_state.usuario}")
+# ------------------------
+# App principal
+# ------------------------
+st.sidebar.success(f"Bienvenido {usuarios[st.session_state['username']]['name']}")
 if st.sidebar.button("Cerrar sesión"):
-    st.session_state.autenticado = False
+    st.session_state.clear()
     st.rerun()
 
-# Archivo CSV donde se guardan los tickets
-ARCHIVO = "tickets.csv"
+# Acceso a Google Sheets
+SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+CREDS = Credentials.from_service_account_file("service_account.json", scopes=SCOPE)
+client = gspread.authorize(CREDS)
 
-# Cargar o crear el archivo
-if os.path.exists(ARCHIVO):
-    df = pd.read_csv(ARCHIVO)
-else:
+SHEET_NAME = "streamlit_tickets"
+WORKSHEET_NAME = "Hoja 1"
+
+try:
+    sheet = client.open(SHEET_NAME).worksheet(WORKSHEET_NAME)
+    datos = sheet.get_all_records()
+    df = pd.DataFrame(datos[1:], columns=datos[0])
+except Exception as e:
+    st.error(f"❌ Error al cargar datos de Google Sheets: {e}")
     df = pd.DataFrame(columns=["ID", "Fecha", "Título", "Descripción", "Prioridad", "Estado", "Responsable"])
-    df.to_csv(ARCHIVO, index=False)
 
-st.title("🎟️ Sistema de Tickets o Reclamos")
+st.title("🎟️ Sistema de Tickets")
 
-st.subheader("📋 Tickets existentes")
+st.header("📋 Tickets existentes")
 st.dataframe(df, use_container_width=True)
 
-st.subheader("➕ Crear nuevo ticket")
+st.header("➕ Crear nuevo ticket")
 with st.form("form_ticket"):
     titulo = st.text_input("Título")
     descripcion = st.text_area("Descripción")
@@ -57,21 +81,13 @@ with st.form("form_ticket"):
     enviar = st.form_submit_button("Guardar ticket")
 
     if enviar:
-        nueva_fila = {
-            "ID": len(df) + 1,
-            "Fecha": datetime.date.today().strftime("%Y-%m-%d"),
-            "Título": titulo,
-            "Descripción": descripcion,
-            "Prioridad": prioridad,
-            "Estado": estado,
-            "Responsable": responsable
-        }
-        df = pd.concat([df, pd.DataFrame([nueva_fila])], ignore_index=True)
-        df.to_csv(ARCHIVO, index=False)
+        nueva_fila = [len(df) + 1, datetime.date.today().strftime("%Y-%m-%d"),
+                      titulo, descripcion, prioridad, estado, responsable]
+        sheet.append_row(nueva_fila)
         st.success("✅ Ticket guardado correctamente")
         st.rerun()
 
-st.subheader("🔎 Filtros")
+st.header("🔎 Filtros")
 col1, col2, col3 = st.columns(3)
 with col1:
     filtro_estado = st.selectbox("Estado", ["Todos"] + df["Estado"].unique().tolist())
@@ -89,24 +105,3 @@ if filtro_responsable != "Todos":
     filtro = filtro[filtro["Responsable"] == filtro_responsable]
 
 st.dataframe(filtro, use_container_width=True)
-
-st.subheader("🛠️ Actualizar estado de un ticket")
-if len(df) == 0:
-    st.info("No hay tickets para actualizar.")
-else:
-    ticket_ids = df["ID"].astype(str).tolist()
-    ticket_seleccionado = st.selectbox("Seleccionar ID del ticket", ticket_ids)
-
-    if ticket_seleccionado:
-        fila = df[df["ID"] == int(ticket_seleccionado)].iloc[0]
-        st.write(f"**Título:** {fila['Título']}")
-        st.write(f"**Estado actual:** {fila['Estado']}")
-
-        nuevo_estado = st.selectbox("Nuevo estado", ["Pendiente", "En curso", "Resuelto"], index=["Pendiente", "En curso", "Resuelto"].index(fila["Estado"]))
-        actualizar = st.button("Actualizar estado")
-
-        if actualizar:
-            df.loc[df["ID"] == int(ticket_seleccionado), "Estado"] = nuevo_estado
-            df.to_csv(ARCHIVO, index=False)
-            st.success(f"Estado del ticket #{ticket_seleccionado} actualizado a '{nuevo_estado}' ✅")
-            st.rerun()
