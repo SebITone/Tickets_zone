@@ -105,3 +105,31 @@ if filtro_responsable != "Todos":
     filtro = filtro[filtro["Responsable"] == filtro_responsable]
 
 st.dataframe(filtro, use_container_width=True)
+
+st.header("✏️ Editar estado de tickets")
+
+if not filtro.empty:
+    for i, row in filtro.iterrows():
+        st.markdown(f"**🎫 Ticket #{row['ID']} - {row['Título']}**")
+
+        nuevo_estado = st.selectbox(
+            f"Estado actual: {row['Estado']}",
+            ["Pendiente", "En curso", "Finalizado"],
+            index=["Pendiente", "En curso", "Finalizado"].index(row["Estado"]),
+            key=f"estado_{i}"
+        )
+
+        if st.button(f"💾 Guardar cambios en ticket #{row['ID']}", key=f"guardar_{i}"):
+            try:
+                # Obtener fila original en la hoja por ID
+                todas_filas = sheet.get_all_records()
+                for j, fila in enumerate(todas_filas, start=2):  # empieza en la fila 2
+                    if fila["ID"] == row["ID"]:
+                        sheet.update_cell(j, 6, nuevo_estado)  # columna 6 es 'Estado'
+                        st.success(f"✅ Estado del ticket #{row['ID']} actualizado a '{nuevo_estado}'")
+                        st.rerun()
+            except Exception as e:
+                st.error(f"❌ Error actualizando Google Sheets: {e}")
+else:
+    st.info("No hay tickets para mostrar o editar con los filtros actuales.")
+
