@@ -52,7 +52,7 @@ if st.sidebar.button("Cerrar sesión"):
 
 # Acceso a Google Sheets
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-CREDS = Credentials.from_service_account_file("service_account.json", scopes=SCOPE)
+CREDS = Credentials.from_service_account_info(st.secrets["google_service_account"], scopes=SCOPE)
 client = gspread.authorize(CREDS)
 
 SHEET_NAME = "streamlit_tickets"
