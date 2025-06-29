@@ -106,30 +106,33 @@ if filtro_responsable != "Todos":
 
 st.dataframe(filtro, use_container_width=True)
 
-st.header("✏️ Editar estado de tickets")
+st.header("✏️ Editar estado de un ticket")
 
+# Validar que hay datos
 if not filtro.empty:
-    for i, row in filtro.iterrows():
-        st.markdown(f"**🎫 Ticket #{row['ID']} - {row['Título']}**")
+    ids_disponibles = filtro["ID"].tolist()
+    id_seleccionado = st.selectbox("Seleccioná el ticket a editar (por ID)", ids_disponibles)
 
-        nuevo_estado = st.selectbox(
-            f"Estado actual: {row['Estado']}",
-            ["Pendiente", "En curso", "Finalizado"],
-            index=["Pendiente", "En curso", "Finalizado"].index(row["Estado"]),
-            key=f"estado_{i}"
-        )
+    # Obtener fila del ticket seleccionado
+    ticket = filtro[filtro["ID"] == id_seleccionado].iloc[0]
+    nuevo_estado = st.selectbox(
+        f"Estado actual: {ticket['Estado']}",
+        ["Pendiente", "En curso", "Finalizado"],
+        index=["Pendiente", "En curso", "Finalizado"].index(ticket["Estado"])
+    )
 
-        if st.button(f"💾 Guardar cambios en ticket #{row['ID']}", key=f"guardar_{i}"):
-            try:
-                # Obtener fila original en la hoja por ID
-                todas_filas = sheet.get_all_records()
-                for j, fila in enumerate(todas_filas, start=2):  # empieza en la fila 2
-                    if fila["ID"] == row["ID"]:
-                        sheet.update_cell(j, 6, nuevo_estado)  # columna 6 es 'Estado'
-                        st.success(f"✅ Estado del ticket #{row['ID']} actualizado a '{nuevo_estado}'")
-                        st.rerun()
-            except Exception as e:
-                st.error(f"❌ Error actualizando Google Sheets: {e}")
+    if st.button("💾 Guardar cambios"):
+        try:
+            # Buscar la fila original en la hoja por ID
+            todas_filas = sheet.get_all_records()
+            for j, fila in enumerate(todas_filas, start=2):  # desde la fila 2 (por los encabezados)
+                if fila["ID"] == ticket["ID"]:
+                    sheet.update_cell(j, 6, nuevo_estado)  # Columna 6 = "Estado"
+                    st.success(f"✅ Estado del ticket #{ticket['ID']} actualizado a '{nuevo_estado}'")
+                    st.rerun()
+        except Exception as e:
+            st.error(f"❌ Error actualizando Google Sheets: {e}")
 else:
-    st.info("No hay tickets para mostrar o editar con los filtros actuales.")
+    st.info("No hay tickets para editar con los filtros actuales.")
+
 
