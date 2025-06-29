@@ -106,33 +106,37 @@ if filtro_responsable != "Todos":
 
 st.dataframe(filtro, use_container_width=True)
 
-st.header("✏️ Editar estado de un ticket")
+st.header("✏️ Editar ticket (estado y descripción)")
 
-# Validar que hay datos
 if not filtro.empty:
     ids_disponibles = filtro["ID"].tolist()
     id_seleccionado = st.selectbox("Seleccioná el ticket a editar (por ID)", ids_disponibles)
 
-    # Obtener fila del ticket seleccionado
+    # Obtener la fila del ticket seleccionado
     ticket = filtro[filtro["ID"] == id_seleccionado].iloc[0]
+
     nuevo_estado = st.selectbox(
         f"Estado actual: {ticket['Estado']}",
         ["Pendiente", "En curso", "Finalizado"],
         index=["Pendiente", "En curso", "Finalizado"].index(ticket["Estado"])
     )
 
+    nueva_descripcion = st.text_area("Editar descripción", value=ticket["Descripción"])
+
     if st.button("💾 Guardar cambios"):
         try:
-            # Buscar la fila original en la hoja por ID
+            # Buscar la fila real por ID en el archivo completo
             todas_filas = sheet.get_all_records()
-            for j, fila in enumerate(todas_filas, start=2):  # desde la fila 2 (por los encabezados)
+            for j, fila in enumerate(todas_filas, start=2):  # desde la fila 2 por encabezado
                 if fila["ID"] == ticket["ID"]:
-                    sheet.update_cell(j, 6, nuevo_estado)  # Columna 6 = "Estado"
-                    st.success(f"✅ Estado del ticket #{ticket['ID']} actualizado a '{nuevo_estado}'")
+                    sheet.update_cell(j, 4, nueva_descripcion)  # columna 4 = "Descripción"
+                    sheet.update_cell(j, 6, nuevo_estado)       # columna 6 = "Estado"
+                    st.success(f"✅ Ticket #{ticket['ID']} actualizado correctamente")
                     st.rerun()
         except Exception as e:
-            st.error(f"❌ Error actualizando Google Sheets: {e}")
+            st.error(f"❌ Error actualizando el ticket: {e}")
 else:
     st.info("No hay tickets para editar con los filtros actuales.")
+
 
 
