@@ -61,7 +61,7 @@ WORKSHEET_NAME = "Hoja 1"
 try:
     sheet = client.open(SHEET_NAME).worksheet(WORKSHEET_NAME)
     datos = sheet.get_all_records()
-    df = pd.DataFrame(datos[1:], columns=datos[0])
+    df = pd.DataFrame(datos)
 except Exception as e:
     st.error(f"❌ Error al cargar datos de Google Sheets: {e}")
     df = pd.DataFrame(columns=["ID", "Fecha", "Título", "Descripción", "Prioridad", "Estado", "Responsable"])
