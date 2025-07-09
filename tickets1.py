@@ -8,9 +8,9 @@ from google.oauth2.service_account import Credentials
 # Login manual sin Hasher
 # ------------------------
 usuarios = {
-    "admin": {
-        "name": "admin",
-        "password": "admin78"
+    "celes": {
+        "name": "Celeste",
+        "password": "celes01"
     },
     "sebs": {
         "name": "Sebastián",
