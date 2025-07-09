@@ -12,11 +12,17 @@ usuarios = {
         "name": "admin",
         "password": "admin78"
     },
-    "juan": {
-        "name": "Juan Pérez",
-        "password": "juan456"
+    "sebs": {
+        "name": "Sebastián",
+        "password": "sebs76"
     }
 }
+
+st.title("Gestor de Tickets y Reclamos")
+
+st.subheader("Centralizá, organizá y hacé seguimiento de todos los incidentes desde un solo lugar")
+
+st.text("Esta aplicación permite registrar, clasificar y hacer seguimiento de reclamos o solicitudes de manera ágil y transparente. Cada ticket queda asociado a un cliente, área o responsable, facilitando la priorización y resolución eficiente. Ideal para equipos de soporte, atención al cliente o gestión interna que buscan trazabilidad y orden en su flujo de trabajo.")
 
 # Inicializar el estado de sesión si no existe
 if "logged_in" not in st.session_state:
@@ -66,7 +72,7 @@ except Exception as e:
     st.error(f"❌ Error al cargar datos de Google Sheets: {e}")
     df = pd.DataFrame(columns=["ID", "Fecha", "Título", "Descripción", "Prioridad", "Estado", "Responsable"])
 
-st.title("🎟️ Sistema de Tickets")
+st.title("🎟️ Gestor de Tickets y Reclamos")
 
 st.header("📋 Tickets existentes")
 st.dataframe(df, use_container_width=True)
