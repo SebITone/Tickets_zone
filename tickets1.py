@@ -18,11 +18,6 @@ usuarios = {
     }
 }
 
-st.title("Gestor de Tickets y Reclamos")
-
-st.subheader("Centralizá, organizá y hacé seguimiento de todos los incidentes desde un solo lugar")
-
-st.text("Esta aplicación permite registrar, clasificar y hacer seguimiento de reclamos o solicitudes de manera ágil y transparente. Cada ticket queda asociado a un cliente, área o responsable, facilitando la priorización y resolución eficiente. Ideal para equipos de soporte, atención al cliente o gestión interna que buscan trazabilidad y orden en su flujo de trabajo.")
 
 # Inicializar el estado de sesión si no existe
 if "logged_in" not in st.session_state:
@@ -34,6 +29,13 @@ if "username" not in st.session_state:
 # Mostrar login solo si no está autenticado
 # ------------------------
 if not st.session_state["logged_in"]:
+    st.title("Gestor de Tickets y Reclamos")
+
+    st.subheader("Centralizá, organizá y hacé seguimiento de todos los incidentes desde un solo lugar")
+
+    st.text("Esta aplicación permite registrar, clasificar y hacer seguimiento de reclamos o solicitudes de manera ágil y transparente. Cada ticket queda asociado a un cliente, área o responsable, facilitando la priorización y resolución eficiente. Ideal para equipos de soporte, atención al cliente o gestión interna que buscan trazabilidad y orden en su flujo de trabajo.")
+
+    
     st.title("🎟️ Sistema de Tickets - Login")
 
     username_input = st.text_input("Usuario")
